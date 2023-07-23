@@ -1,6 +1,6 @@
 # IDE user specific files
-.vs/
 .idea/
+.vs/
 .vsconfig
 
 # Compiled Object files
