@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -12,18 +10,32 @@ class UNREALSHOOTERGAME_API ACharacterBase : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ACharacterBase();
 
+	UFUNCTION(BlueprintPure, Category = "Stats")
+	float GetHealth() const { return Health; }
+
+	UFUNCTION(BlueprintPure, Category = "Stats")
+	float GetMaxHealth() const { return MaxHealth; }
+
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	void SetHealth(const float NewHealth);
+
+	UFUNCTION(BlueprintCallable, Category = "Stats")
+	virtual float TakeDamage(float DamageTaken, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	UPROPERTY(ReplicatedUsing = OnRep_Health)
+	float Health;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Stats")
+	float MaxHealth;
+	
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	void OnHealthUpdate();
+	
+	UFUNCTION()
+	void OnRep_Health();
 };

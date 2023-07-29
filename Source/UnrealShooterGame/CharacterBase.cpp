@@ -1,34 +1,52 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "CharacterBase.h"
+#include "Net/UnrealNetwork.h"
 
-// Sets default values
 ACharacterBase::ACharacterBase()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
+	MaxHealth = 100;
+	Health = MaxHealth;
 }
 
-// Called when the game starts or when spawned
-void ACharacterBase::BeginPlay()
+void ACharacterBase::SetHealth(const float NewHealth)
 {
-	Super::BeginPlay();
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		Health = FMath::Clamp(NewHealth, 0, MaxHealth);
+		OnHealthUpdate();
+	}
+}
+
+float ACharacterBase::TakeDamage(const float DamageTaken, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	SetHealth(Health - DamageTaken);
+	return Super::TakeDamage(DamageTaken, DamageEvent, EventInstigator, DamageCauser);
+}
+
+void ACharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ACharacterBase, Health);
+}
+
+void ACharacterBase::OnHealthUpdate()
+{
+	if (IsLocallyControlled())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("You now have %f health remaining."), Health));
+
+		if (Health <= 0)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("You have been killed!"));
+		}
+	}
 	
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("%s now has %f health remaining."), *GetFName().ToString(), Health));
+	}
 }
 
-// Called every frame
-void ACharacterBase::Tick(float DeltaTime)
+void ACharacterBase::OnRep_Health()
 {
-	Super::Tick(DeltaTime);
-
+	OnHealthUpdate();
 }
-
-// Called to bind functionality to input
-void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-}
-
