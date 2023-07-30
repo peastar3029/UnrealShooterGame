@@ -32,4 +32,11 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Stats")
 	float Damage;
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void Destroyed() override;
+
+	UFUNCTION()
+	void OnProjectileImpact(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
 };

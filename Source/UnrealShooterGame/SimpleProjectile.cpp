@@ -1,6 +1,7 @@
 #include "SimpleProjectile.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
 
 ASimpleProjectile::ASimpleProjectile()
@@ -36,4 +37,29 @@ ASimpleProjectile::ASimpleProjectile()
 
 	DamageType = UDamageType::StaticClass();
 	Damage = 10.0f;
+}
+
+void ASimpleProjectile::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	if (GetLocalRole() == ROLE_Authority)
+	{
+		CollisionShapeComponent->OnComponentHit.AddDynamic(this, &ASimpleProjectile::OnProjectileImpact);
+	}
+}
+
+void ASimpleProjectile::Destroyed()
+{
+	Super::Destroyed();
+	UGameplayStatics::SpawnEmitterAtLocation(this, ExplosionEffect, GetActorLocation(), FRotator::ZeroRotator, true, EPSCPoolMethod::AutoRelease);
+}
+
+void ASimpleProjectile::OnProjectileImpact(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (OtherActor)
+	{
+		UGameplayStatics::ApplyPointDamage(OtherActor, Damage, NormalImpulse, Hit, GetInstigator()->Controller, this, DamageType);
+	}
+	Destroy();
 }
